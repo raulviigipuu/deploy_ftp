@@ -1,0 +1,56 @@
+name: Release Builds
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Upload Binaries
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        goos: [linux, windows]
+        goarch: [amd64]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24.3"
+
+      - name: Build binary and create zip
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+        run: |
+          mkdir -p dist
+          
+          # Determine file name based on OS
+          BIN_NAME="deploy_ftp"
+          if [ "$GOOS" = "windows" ]; then
+            BIN_NAME="deploy_ftp.exe"
+          fi
+
+          # Build binary with version
+          go build -ldflags "-X main.Version=${{ github.ref_name }}" \
+            -o "$BIN_NAME" ./cmd/deploy_ftp
+
+          # Zip it
+          ZIP_NAME="deploy_ftp-${GOOS}-${GOARCH}.zip"
+          zip -j "dist/$ZIP_NAME" "$BIN_NAME"
+
+      - name: Upload release asset
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

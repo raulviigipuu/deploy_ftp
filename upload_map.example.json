@@ -1,0 +1,18 @@
+[
+  {
+    "local": "public/index.html",
+    "remote": "/site/index.html"
+  },
+  {
+    "local": "public/style.css",
+    "remote": "/site/style.css"
+  },
+  {
+    "local": "public/script.js",
+    "remote": "/site/script.js"
+  },
+  {
+    "local": "public/favicon.ico",
+    "remote": "/site/favicon.ico"
+  }
+]
