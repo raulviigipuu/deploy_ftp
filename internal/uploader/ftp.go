@@ -9,9 +9,8 @@ import (
 	"time"
 
 	"github.com/raulviigipuu/deploy_ftp/internal/config"
+	"github.com/raulviigipuu/deploy_ftp/internal/logx"
 	"github.com/secsy/goftp"
-
-	logx "github.com/raulviigipuu/deploy_ftp/internal/logx"
 )
 
 // ========================

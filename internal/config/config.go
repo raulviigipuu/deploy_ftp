@@ -9,8 +9,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
-
-	logx "github.com/raulviigipuu/deploy_ftp/internal/logx"
+	"github.com/raulviigipuu/deploy_ftp/internal/logx"
 )
 
 type UploadEntry struct {
