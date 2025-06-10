@@ -10,7 +10,7 @@ It's meant for simple local deploys.
 
     go build -o deploy_ftp ./cmd/deploy_ftp
 
-## Setup
+## 🧰 Setup
 
     cp upload_map.example.json upload_map.json
 
@@ -21,6 +21,8 @@ Map the local and remote file paths
 Change the credentials
 
 ## ▶️ Run
+
+If the mappings are in **upload_map.json** and the credentials are in the **.env** file, no options are needed.
 
     go run ./cmd/deploy_ftp
 
@@ -38,7 +40,9 @@ Or after building:
 | `--dry-run`  | Simulates the upload: logs which files would be uploaded and which directories would be created.            |
 | `--env-path` | Custom path to your `.env` file (default: `./.env`).                                                        |
 | `--map`      | Custom path to your `upload_map.json` file (default: `./upload_map.json`).                                  |
-| `--version`  | Display version info                                                                                        |
+| `-v`         | Display version info                                                                                        |
+| `-h`         | Display help/usage info                                                                                     |
+
 
 ### Examples
 
