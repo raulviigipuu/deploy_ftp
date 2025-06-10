@@ -10,6 +10,16 @@ It's meant for simple local deploys.
 
     go build -o deploy_ftp ./cmd/deploy_ftp
 
+## Setup
+
+    cp upload_map.example.json upload_map.json
+
+Map the local and remote file paths
+
+    cp .env.sample .env
+
+Change the credentials
+
 ## ▶️ Run
 
     go run ./cmd/deploy_ftp
