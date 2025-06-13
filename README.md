@@ -10,6 +10,10 @@ It's meant for simple local deploys.
 
     go build -o deploy_ftp ./cmd/deploy_ftp
 
+## 📥 Install
+
+    go install ./cmd/deploy_ftp
+
 ## 🧰 Setup
 
     cp upload_map.example.json upload_map.json
