@@ -33,7 +33,7 @@ func main() {
 
 	// Version
 	if *versionFlag {
-		logx.Info(fmt.Sprintf("deploy_ftp version: %s", Version))
+		fmt.Printf("deploy_ftp version: %s\n", Version)
 		return
 	}
 
