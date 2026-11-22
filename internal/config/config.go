@@ -1,12 +1,12 @@
 package config
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/raulviigipuu/deploy_ftp/internal/logx"
@@ -18,12 +18,12 @@ type UploadEntry struct {
 }
 
 type Config struct {
-	FTPHost string
-	FTPPort int
-	FTPUser string
-	FTPPass string
-	UseTLS  bool
-	Map     []UploadEntry
+	FTPHost       string
+	FTPPort       int
+	FTPUser       string
+	FTPPass       string
+	TLSMaxVersion uint16
+	Map           []UploadEntry
 }
 
 // ===========================
@@ -58,8 +58,16 @@ func Load(envPath string, mapPath string) (*Config, error) {
 	}
 	cfg.FTPPort = port
 
-	// Optional: use TLS if FTP_TLS=true
-	cfg.UseTLS = strings.ToLower(os.Getenv("FTP_TLS")) == "true"
+	switch os.Getenv("FTP_TLS_MAX_VERSION") {
+	case "":
+		// Use the Go TLS defaults.
+	case "1.2":
+		cfg.TLSMaxVersion = tls.VersionTLS12
+	case "1.3":
+		cfg.TLSMaxVersion = tls.VersionTLS13
+	default:
+		return nil, fmt.Errorf("FTP_TLS_MAX_VERSION must be 1.2 or 1.3")
+	}
 
 	// 2. Load upload_map.json
 	if mapPath == "" {

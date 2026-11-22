@@ -4,13 +4,25 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	"github.com/raulviigipuu/deploy_ftp/internal/config"
 	"github.com/raulviigipuu/deploy_ftp/internal/logx"
 	"github.com/raulviigipuu/deploy_ftp/internal/uploader"
 )
 
-var Version = "dev" // default if not overridden at build time
+// Version is set by the release workflow via linker flags.
+var Version string
+
+func buildVersion() string {
+	if Version != "" {
+		return Version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+		return info.Main.Version
+	}
+	return "dev"
+}
 
 func main() {
 
@@ -20,6 +32,7 @@ func main() {
 	mapPath := flag.String("map", "", "Path to upload_map.json (default: ./upload_map.json)")
 	verifyOnly := flag.Bool("verify", false, "Only test FTP connection, do not upload")
 	dryRun := flag.Bool("dry-run", false, "Simulate FTP upload without transferring files")
+	debug := flag.Bool("debug", false, "Log FTP commands and replies with credentials redacted")
 	versionFlag := flag.Bool("v", false, "Show version and exit")
 	helpFlag := flag.Bool("h", false, "Show help and exit")
 
@@ -33,7 +46,7 @@ func main() {
 
 	// Version
 	if *versionFlag {
-		fmt.Printf("deploy_ftp version: %s\n", Version)
+		fmt.Printf("deploy_ftp version: %s\n", buildVersion())
 		return
 	}
 
@@ -45,12 +58,12 @@ func main() {
 
 	logx.Info("✅ Configuration loaded successfully:")
 	logx.Info(fmt.Sprintf("FTP Host: %s", cfg.FTPHost))
-	logx.Info(fmt.Sprintf("TLS Enabled: %v", cfg.UseTLS))
+	logx.Info("FTP mode: explicit FTPS")
 	logx.Info(fmt.Sprintf("Dry-run: %v", *dryRun))
 	logx.Info(fmt.Sprintf("Verify: %v", *verifyOnly))
 
 	if *verifyOnly {
-		if err := uploader.TestConnection(cfg); err != nil {
+		if err := uploader.TestConnection(cfg, *debug); err != nil {
 			logx.FatalErr(err)
 		}
 		logx.Info("✅ FTP connection successful!")
@@ -73,7 +86,7 @@ func main() {
 	}
 
 	// Upload
-	if err := uploader.UploadAll(cfg, *dryRun); err != nil {
+	if err := uploader.UploadAll(cfg, *dryRun, *debug); err != nil {
 		logx.Fatal("❌ " + err.Error())
 	}
 }
@@ -91,7 +104,8 @@ func printHelp() {
 	fmt.Println("  -map string        Path to upload_map.json (default: ./upload_map.json)")
 	fmt.Println("  -verify            Only test FTP connection, do not upload")
 	fmt.Println("  -dry-run           Simulate FTP upload without transferring files")
-	fmt.Println("  -v           Show version and exit")
+	fmt.Println("  -debug             Log FTP commands and replies with credentials redacted")
+	fmt.Println("  -v                 Show version and exit")
 	fmt.Println("  -h                 Show this help and exit")
 	fmt.Println()
 	fmt.Println("Examples:")

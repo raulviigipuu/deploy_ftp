@@ -13,6 +13,9 @@ It's meant for simple local deploys.
 ## 📥 Install
 
     go install ./cmd/deploy_ftp
+    deploy_ftp -v
+
+When installed from a Git checkout, `-v` shows the module version Go embeds in the binary. A tagged commit shows its tag. Other commits show a Go pseudo-version containing the commit ID. Uncommitted changes add a `+dirty` suffix.
 
 ## 🧰 Setup
 
@@ -30,7 +33,7 @@ If the mappings are in **upload_map.json** and the credentials are in the **.env
 
     go run ./cmd/deploy_ftp
 
-    go run ./cmd/deploy_ftp [--verify] [--dry-run] [--env-path PATH] [--map PATH]
+    go run ./cmd/deploy_ftp [--verify] [--dry-run] [-debug] [--env-path PATH] [--map PATH]
 
 Or after building:
 
@@ -42,6 +45,7 @@ Or after building:
 |--------------|-------------------------------------------------------------------------------------------------------------|
 | `--verify`   | Verifies FTP connection and login; no upload is performed.                                                  |
 | `--dry-run`  | Simulates the upload: logs which files would be uploaded and which directories would be created.            |
+| `-debug`     | Logs FTP commands and replies to stderr with credentials redacted.                                          |
 | `--env-path` | Custom path to your `.env` file (default: `./.env`).                                                        |
 | `--map`      | Custom path to your `upload_map.json` file (default: `./upload_map.json`).                                  |
 | `-v`         | Display version info                                                                                        |
@@ -84,7 +88,9 @@ You can also provide custom paths:
     FTP_PORT=2121
     FTP_USER=yourusername
     FTP_PASS=yourpassword
-    USE_TLS=true
+    # FTP_TLS_MAX_VERSION=1.2
+
+The client uses explicit FTPS. If a server repeatedly returns `451 Error during read from data connection` during uploads, try setting `FTP_TLS_MAX_VERSION=1.2` in that deployment's `.env`. Leave it unset for Go's default TLS negotiation. Use `-debug` to see the negotiated TLS version.
 
 ### Sample upload_map.json
 
@@ -105,9 +111,11 @@ Upload all mapped files to the configured FTP server:
 
     ./deploy_ftp
 
-If a file is missing locally, it is skipped with a warning.
+The uploader tries to create missing remote directories. After a temporary FTP failure, it retries the file from the beginning up to twice, after 250 ms and 500 ms.
 
-If the remote directory does not exist, it will be created (TODO).
+The uploader processes the rest of the map after a file fails. It lists failed files at the end and exits with status 1 if any file could not be uploaded.
+
+Use `./deploy_ftp -debug` to trace FTP commands and replies on stderr.
 
 ## 🔧 Maintenance
 
@@ -121,3 +129,33 @@ To build cross-platform binaries:
     GOOS=linux GOARCH=amd64 go build -o deploy_ftp_linux ./cmd/deploy_ftp
     GOOS=windows GOARCH=amd64 go build -o deploy_ftp.exe ./cmd/deploy_ftp
 
+## Release on GitHub
+
+Run this from the repository root on `main`. Choose an unused version tag. This example uses `v1.1.0`.
+
+```sh
+git status --short
+go test ./...
+```
+
+Stage the files for the release and review the staged changes before committing.
+
+```sh
+git add -A
+git diff --cached
+```
+
+```sh
+git commit -m "Prepare deploy_ftp v1.1.0"
+git tag -a v1.1.0 -m "deploy_ftp v1.1.0"
+git push origin main v1.1.0
+```
+
+Pushing the tag triggers GitHub Actions to build Linux and Windows `amd64` ZIP archives and attach them to the GitHub release.
+
+Install the tagged version and check the version printed by the binary.
+
+```sh
+go install github.com/raulviigipuu/deploy_ftp/cmd/deploy_ftp@v1.1.0
+deploy_ftp -v
+```
